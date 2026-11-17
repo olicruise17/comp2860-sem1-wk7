@@ -34,7 +34,15 @@ class VigenereCipher:
         str
             The shifted letter.
         """
-        shifted_letter = ''
+
+        position = ord(letter) - VigenereCipher.offset
+
+        if forward:
+            new_position = (position + shift) % 26
+        else:
+            new_position = (position - shift) % 26
+
+        shifted_letter = chr(new_position + VigenereCipher.offset)
         return shifted_letter
 
     def __generate_shift_list(self, plaintext_length: int):
@@ -58,7 +66,25 @@ class VigenereCipher:
         list
             A list of shifts (integers).
         """
+
+        words = []
         shift_list = []
+
+        length_keyword = len(self.keyword)
+        whole = plaintext_length // length_keyword
+        remainder = plaintext_length % length_keyword
+
+        for i in range(whole):
+            words.append(self.keyword)
+
+        words.append(self.keyword[:remainder])
+        shift_string = "".join(words)
+
+        print("Shift String: ", shift_string)
+        for char in shift_string:
+            position = ord(char) - VigenereCipher.offset
+            shift_list.append(position)
+
         return shift_list
 
     def encrypt(self, plaintext: str):
@@ -82,7 +108,25 @@ class VigenereCipher:
         str
             The ciphertext string.
         """
+
         ciphertext = ''
+        upper_text = plaintext.upper()
+        new_text = ""
+
+        for char in upper_text:
+            if char.isalpha():
+                new_text += char
+
+        shifted_list = self.__generate_shift_list(len(new_text))
+        print("Shifted List: ", shifted_list)
+
+        current = 0
+        for char in new_text:
+            shifted_letter = self.__shift_letter(char, shifted_list[current], True)
+            ciphertext += shifted_letter
+            current += 1
+
+        print("Ciphertext: ", ciphertext)
         return ciphertext
 
     def decrypt(self, ciphertext: str):
@@ -109,7 +153,25 @@ class VigenereCipher:
         str
             The plaintext string.
         """
+        upper_text = ciphertext.upper()
+        new_text = ""
+
+        for char in upper_text:
+            if char.isalpha():
+                new_text += char
+
+        shifted_list = self.__generate_shift_list(len(new_text))
+        print("Shifted List: ", shifted_list)
+
         plaintext = ''
+        current = 0
+
+        for char in new_text:
+            shifted_letter = self.__shift_letter(char, shifted_list[current], False)
+            plaintext += shifted_letter
+            current += 1
+
+        print("Plaintext: ", plaintext)
         return plaintext
 
 
@@ -117,6 +179,7 @@ def main():
     vig_cipher = VigenereCipher('smarties')
     ciphertext = vig_cipher.encrypt("The quick brown fox jumps over the lazy dog")
     plaintext = vig_cipher.decrypt(ciphertext)
+    print(plaintext)
     assert plaintext == 'THEQUICKBROWNFOXJUMPSOVERTHELAZYDOG'
 
 
